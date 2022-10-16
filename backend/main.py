@@ -7,8 +7,13 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*']
+)
 
 
 @app.get('/')
@@ -86,52 +91,61 @@ def getProductPrice(product_booster: str):
     product_price = []
 
     # Headout Price
-    headout_url = f'https://www.headout.com/search/?q={product_booster}'
-    headout_driver = webdriver.Chrome(
-        executable_path="C:\webdriver\chromedriver.exe")
-    headout_driver.get(headout_url)
-    product = headout_driver.find_element(By.CLASS_NAME, 'product-card')
-    headout_price = product.find_element(
-        By.XPATH, '/html/body/div[1]/div[3]/div/div[2]/div/div[2]/div/div[1]/div/div[2]/div[2]/div/span').text
-    if headout_price == 'from':
+    try:
+        headout_url = f'https://www.headout.com/search/?q={product_booster}'
+        headout_driver = webdriver.Chrome(
+            executable_path="C:\webdriver\chromedriver.exe")
+        headout_driver.get(headout_url)
+        product = headout_driver.find_element(By.CLASS_NAME, 'product-card')
         headout_price = product.find_element(
-            By.XPATH, '/html/body/div[1]/div[3]/div/div[2]/div[2]/div[2]/div[1]/div[1]/div/div[2]/div[2]/div/span[2]').text
-    print('headout price : ', headout_price)
-    product_price.append({"headout_price": headout_price})
+            By.XPATH, '/html/body/div[1]/div[3]/div/div[2]/div/div[2]/div/div[1]/div/div[2]/div[2]/div/span').text
+        if headout_price == 'from':
+            headout_price = product.find_element(
+                By.XPATH, '/html/body/div[1]/div[3]/div/div[2]/div[2]/div[2]/div[1]/div[1]/div/div[2]/div[2]/div/span[2]').text
+        print('headout price : ', headout_price)
+        product_price.append({"platform": "headout", "price": headout_price})
+    except:
+        pass
 
-    # Viator Price
-    viator_url = f'https://www.viator.com/searchResults/all?text={product_booster}'
-    viator_driver = webdriver.Chrome(
-        executable_path="C:\webdriver\chromedriver.exe")
+    # # Viator Price
+    # viator_url = f'https://www.viator.com/searchResults/all?text={product_booster}'
+    # viator_driver = webdriver.Chrome(
+    #     executable_path="C:\webdriver\chromedriver.exe")
 
-    viator_driver.get(viator_url)
+    # viator_driver.get(viator_url)
 
-    viator_price = viator_driver.find_element(
-        By.XPATH, '/html/body/div[2]/div[7]/div/div[1]/div[2]/div[2]/div[3]/div/div[3]/div/div[1]/div/div/div/div[3]/div/div/div/div[2]').text
-    product_price.append({"viator_price": viator_price})
+    # viator_price = viator_driver.find_element(
+    #     By.XPATH, '/html/body/div[2]/div[7]/div/div[1]/div[2]/div[2]/div[3]/div/div[3]/div/div[1]/div/div/div/div[3]/div/div/div/div[2]').text
+    # product_price.append({"viator_price": viator_price})
 
     # Thrillophilla Price
-    thrillophilla_url = f'https://www.thrillophilia.com/listings/search?search={product_booster}'
+    try:
+        thrillophilla_url = f'https://www.thrillophilia.com/listings/search?search={product_booster}'
 
-    thrillophilla_driver = webdriver.Chrome(
-        executable_path="C:\webdriver\chromedriver.exe")
+        thrillophilla_driver = webdriver.Chrome(
+            executable_path="C:\webdriver\chromedriver.exe")
 
-    thrillophilla_driver.get(thrillophilla_url)
+        thrillophilla_driver.get(thrillophilla_url)
 
-    thrillophilla_price = thrillophilla_driver.find_element(
-        By.XPATH, '/html/body/div/div/main/div[3]/div/form/div[3]/div[2]/div[2]/span[2]/div[3]/div/div[3]/div/p/span[1]').text
-    product_price.append({"thrillophilla_price": thrillophilla_price})
+        thrillophilla_price = thrillophilla_driver.find_element(
+            By.XPATH, '/html/body/div/div/main/div[3]/div/form/div[3]/div[2]/div[2]/span[2]/div[3]/div/div[3]/div/p/span[1]').text
+        product_price.append(
+            {"platform": "thrillophilla", "price": thrillophilla_price})
+    except:
+        pass
 
     # Tiquet Price
-    tiquet_url = f'https://www.tiqets.com/en/search?q={product_booster}s'
-    tiquet_driver = webdriver.Chrome(
-        executable_path="C:\webdriver\chromedriver.exe")
-    tiquet_driver.get(tiquet_url)
-    delay = 5
-    myElem = WebDriverWait(tiquet_driver, delay).until(
-        EC.presence_of_element_located((By.XPATH, '/html/body/div[4]/div[1]/div[2]/div/div[2]/article[1]/div[2]/footer/div/div[2]/span[2]')))
+    try:
+        tiquet_url = f'https://www.tiqets.com/en/search?q={product_booster}s'
+        tiquet_driver = webdriver.Chrome(
+            executable_path="C:\webdriver\chromedriver.exe")
+        tiquet_driver.get(tiquet_url)
+        delay = 5
+        myElem = WebDriverWait(tiquet_driver, delay).until(
+            EC.presence_of_element_located((By.XPATH, '/html/body/div[4]/div[1]/div[2]/div/div[2]/article[1]/div[2]/footer/div/div[2]/span[2]')))
 
-    print('Tiquet price : ', myElem.text)
-    product_price.append({'tiquet_price': myElem.text})
-
+        print('Tiquet price : ', myElem.text)
+        product_price.append({"platform": "tiquet", "price": myElem.text})
+    except:
+        pass
     return (product_price)
